@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<!--This is the HTML document for a snake game project-->
+<html>
+<!--Head contains all style information and meta information-->
+<head>
+    <!--The title of the website is Snake-->
+    <title> Snake </title>
+    <style>
+        h1 {
+            text-align: center;
+            font-size: 60px;
+        }
+    </style>
+</head>
+<!--Body contains the main HTML elements-->
+<body>
+    <h1> Snake Game </h1>
+    <h1 id="points"> 0 </h1>
+    <!--The canvas element provides the visual feedback of the game-->
+    <canvas id="gameCanvas" width="800" height="800" style="border:4px solid black;"></canvas>
+
+    <style>
+        #gameCanvas {
+          position: absolute;
+          top: 50%;
+          left: 50%;
+          transform: translate(-50%, -50%);
+        }
+      </style>
+</body>
+    <!--The following Javascript handles game logic and draws images to the gameCanvas-->
+<script>
+        //Canvas variable creates a reference to the gameCanvas
+        const canvas = document.getElementById("gameCanvas");
+        //Canvas_ctx contains the 2D image information
+        const canvas_ctx = canvas.getContext("2d");
+        //The snake array contains vector coordinates of where each snake body piece is
+        let snake = [
+            {x: 400, y: 400},
+            {x: 380, y: 400}, 
+            {x: 360, y: 400}, 
+            {x: 340, y: 400}, 
+            {x: 320, y: 400}
+        ]
+        //The following variables convey the distance the snake's head moves each frame on an x and y plane
+        let dx = 20; //x movement
+        let dy = 0;  //y movement
+
+        let length = 5; //This variable stores the size of the snake and will be used to compare itself against the snake array.length
+
+        //This variable stores randomized coordinates for the food
+        let food = {x: Math.floor(Math.random() * 40) * 20, y: Math.floor(Math.random() * 40) * 20 };
+
+        var changingDirection; //This variable stores a boolean for whether the player initiated a turn in that frame update
+        //This is so that the player cannot turn twice in between frames
+
+    document.addEventListener("keydown", changeDirection); //Creates an event for when a key is pressed to then execute the changeDirection function
+    main(); //Main function called repeatedly to keep updating the game
+    function main() {
+        //Update the score
+        document.getElementById("points").innerHTML = (length - 5)*10;
+            //Checks if the game has ended, if it has it ends the main function
+            if (hasGameEnded()) { return }
+            //Turning is reset so player can turn again
+            changingDirection = false;
+            //Waits 500 miliseconds before calling the function frameUpdate()
+            setTimeout(function frameUpdate(){
+                clearBoard(); //Draw background gradient over everything
+                newFood(); //Generates new food if food has been eaten
+                moveSnake(); //Shift the snake array based on its velocity determined by the player inputs
+                snake.forEach(drawPiece); //Draw each piece of the new snake
+                main(); //Call the main function again repeats all code
+            }, 80);
+        }
+        
+        //Function clears the board by drawing a linear gradiant over everything
+        function clearBoard() {
+            var background = canvas_ctx.createLinearGradient(0,0,0,800); //creates a linear gradient named background
+            background.addColorStop(0,"white"); //sets the top color of the  background gradient to white
+            background.addColorStop(1,"darkGrey"); //Sets the bottom color of the background gradient to dark grey
+            canvas_ctx.fillStyle = background; //Sets the gradient as the fill style of the canvas
+            canvas_ctx.fillRect(0,0,800,800); //Fills the entire canvas with a rectangle
+        }
+        //Function draws a snake part as a square at an XY vector coordinate
+        function drawPiece(snakePart) {
+            //The following functions are methods and properties of the 2D canvas 
+            //PROPERTY Sets the fill color to lightblue
+            canvas_ctx.fillStyle = 'green';  
+            //PEOPERTY Sets the line color to darkblue
+            canvas_ctx.strokestyle = 'darkgreen';
+            //METHOD Draws a solid 10-by-10 rectangle with the fill color at the XY coordinates
+            canvas_ctx.fillRect(snakePart.x, snakePart.y, 20, 20);  
+            //METHOD Draws an rectangular outline similar to above but uses line color instead of solid fill color
+            canvas_ctx.strokeRect(snakePart.x, snakePart.y, 20, 20);
+        }
+        
+        //Function moves the coordinates snake array by shifting the array and popping its tail
+        function moveSnake() {
+            const newHead = {x: snake[0].x+dx, y: snake[0].y+dy}; //Stores the new coordinates of the head after its x and y values are adjusted
+            snake.unshift(newHead); //Inserts the new head coordinates at the front of the snake array
+            //If the snake.length array is bigger than it should be
+            if (snake.length > length) {
+                //Delete the tail of the snake
+                snake.pop();
+            }
+        }
+        //Function controls the direction the player is moving
+    function changeDirection(event) {
+        //If the player already initiated a turn in that frame then cancel this function
+        if (changingDirection) { return };
+        //If the previous code didn't execute then the snake is changing direction
+        changingDirection = true;
+            //Keypressed contains what button was pressed by the player
+            const keyPressed = event.keyCode;
+            //The following variables contain booleans which are determined by which direction the snake is moving
+            //Only one of the variables will be true at any given moment
+            const goingUp = dy === -20;
+            const goingDown = dy === 20;
+            const goingLeft = dx === -20;
+            const goingRight = dx ===20;
+            //if statements 
+            //If the key pressed has the left arrow keycode of 37 and the snake is not moving right
+            if (keyPressed === 37 && !goingRight) {
+                //Change the velocity of the snake to move left
+                dx = -20;
+                dy = 0;
+            }
+            //If the key pressed has the up arrow keycode of 38 and the snake is not moving down
+            if (keyPressed === 38 && !goingDown) {
+                //Change the velocity of the snake to move up
+                dx = 0;
+                dy = -20;
+            }
+            //If the key pressed has the right arrow keycode of 39 and the snake is not moving left
+            if (keyPressed === 39 && !goingLeft) {
+                //Change the velocity of the snake to move right
+                dx = 20;
+                dy = 0;
+            }
+            //If the key pressed has the down arrow keycode of 40 and the snake is not moving up
+            if (keyPressed === 40 && !goingUp) {
+                //Change the velocity of the snake to move down
+                dx = 0;
+                dy = 20;
+            }
+        }
+        //Function checks if the game has ended and returns a boolean
+    function hasGameEnded() {
+            //For loop checks if the head of the snake has the same coordinates as each body part
+            for (i = 4; i < snake.length; i++) {
+                if (snake[i].x === snake[0].x && snake[i].y === snake[0].y) { return true }
+                //Returns true if any snake piece intersects the snake head
+        }
+        //The following variables are booleans based that are true if the snake's head coordinates are outside of the boundaries
+            const leftWall = snake[0].x < 0;
+            const rightWall = snake[0].x > canvas.width-20;
+            const topWall = snake[0].y <0;
+            const bottomWall = snake[0].y > canvas.height - 20;
+        //Returns true if any one of those booleans are true
+            return leftWall || rightWall || topWall || bottomWall
+    }
+    //Function generates and draws new food coordinates after
+    function newFood() {
+        //If the snake has eaten the food
+        if (snake[0].x === food.x && snake[0].y === food.y) {
+            //Generate new food coordinates
+            food = { x: Math.floor(Math.random() * 40) * 20, y: Math.floor(Math.random() * 40) * 20 }
+            //Check that the new food coordinates do not intersect the snake array
+            checkFood();
+            //increase the snake array length
+            length++;
+        }
+        //Code that draws the food
+        canvas_ctx.fillStyle = 'Blue'; //Sets the main fill color to blue
+        canvas_ctx.strokestyle = 'Navy';  //Sets the border color to navy
+        canvas_ctx.fillRect(food.x, food.y, 20, 20); //Draws solid blue square at food coordinates
+        canvas_ctx.strokeRect(food.x, food.y, 20, 20); //Draws border square at food coordinates
+    }
+    //function checks if the food coordinates generated ontop of snake coordinates
+    function checkFood() {
+        //For every snake array index
+        for (i = 1; i < snake.length; i++) {
+            //If the snake coordinates are the same as the food coordinates
+            if (snake[i].x === food.x && snake[i].y === food.y) {
+                //Generate new food coordinates
+                food = { x: Math.floor(Math.random() * 40) * 20, y: Math.floor(Math.random() * 40) * 20 }
+                //Check the new food coordinates
+                checkFood()
+            }
+        }
+    }
+
+</script>
+<!--End of document-->
+</html>
